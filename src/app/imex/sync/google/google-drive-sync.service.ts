@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { concatMap, distinctUntilChanged, first, map, tap } from 'rxjs/operators';
+import { concatMap, distinctUntilChanged, first, map } from 'rxjs/operators';
 import { GlobalConfigService } from '../../../features/config/global-config.service';
 import { GoogleDriveSyncConfig } from '../../../features/config/global-config.model';
 import { DataInitService } from '../../../core/data-init/data-init.service';
@@ -16,7 +16,7 @@ import { IS_F_DROID_APP } from '../../../util/is-android-web-view';
 export class GoogleDriveSyncService implements SyncProviderServiceInterface {
   id: SyncProvider = SyncProvider.GoogleDrive;
 
-  cfg$: Observable<GoogleDriveSyncConfig> = this._configService.cfg$.pipe(map(cfg => cfg.sync.googleDriveSync));
+  cfg$: Observable<GoogleDriveSyncConfig> = this._globalConfigService.cfg$.pipe(map(cfg => cfg.sync.googleDriveSync));
 
   isReady$: Observable<boolean> = this._dataInitService.isAllDataLoadedInitially$.pipe(
     concatMap(() => this._googleApiService.isLoggedIn$),
@@ -26,17 +26,18 @@ export class GoogleDriveSyncService implements SyncProviderServiceInterface {
     distinctUntilChanged(),
   );
 
-  isReadyForRequests$: Observable<boolean> = this.isReady$.pipe(
-    tap((isReady) => !isReady && new Error('Google Drive Sync not ready')),
-    first(),
-  );
-
   constructor(
-    private _configService: GlobalConfigService,
+    private _globalConfigService: GlobalConfigService,
     private _googleApiService: GoogleApiService,
     private _dataInitService: DataInitService,
     private _compressionService: CompressionService,
   ) {
+    // setInterval(() => {
+    //   console.log('REQUEST!!!');
+    //   if (IS_ELECTRON) {
+    //   }
+    // }, 45 * 1000);
+
   }
 
   async getRevAndLastClientUpdate(localRev: string): Promise<{ rev: string; clientUpdate: number } | SyncGetRevResult> {
@@ -55,7 +56,7 @@ export class GoogleDriveSyncService implements SyncProviderServiceInterface {
     };
   }
 
-  async downloadAppData(): Promise<{ rev: string, data: AppDataComplete | undefined }> {
+  async downloadAppData(): Promise<{ rev: string; data: AppDataComplete | undefined }> {
     if (IS_F_DROID_APP) {
       throw new Error('Google Drive Sync not supported on FDroid');
     }
@@ -108,9 +109,9 @@ export class GoogleDriveSyncService implements SyncProviderServiceInterface {
         try {
           const decompressedData = await this._compressionService.decompressUTF16(backupStr);
           backupData = JSON.parse(decompressedData) as AppDataComplete;
-        } catch (e) {
+        } catch (ex) {
           console.error('Drive Sync, invalid data');
-          console.warn(e);
+          console.warn(ex);
         }
       }
     }

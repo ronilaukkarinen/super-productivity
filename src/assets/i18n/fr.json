@@ -927,7 +927,8 @@
       "RU": "russe",
       "TITLE": "Langue",
       "TR": "Turc",
-      "ZH": "chinois"
+      "ZH": "Chinois simplifié",
+      "ZH_TW": "Chinois traditionnel"
     },
     "MISC": {
       "DEFAULT_PROJECT": "Projet par défaut à utiliser pour les tâches si aucun n'est spécifié",
@@ -1096,7 +1097,7 @@
   "PS": {
     "GLOBAL_SETTINGS": "Paramètres globaux",
     "ISSUE_INTEGRATION": "Intégration des problèmes",
-    "PRIVATE_POLICY": "Politique privée",
+    "PRIVACY_POLICY": "Politique privée",
     "PRODUCTIVITY_HELPER": "Aide à la productivité",
     "PROJECT_SETTINGS": "Paramètres spécifiques au projet",
     "PROVIDE_FEEDBACK": "Fournir une réponse",

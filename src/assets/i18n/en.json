@@ -77,6 +77,45 @@
         }
       }
     },
+    "CALDAV": {
+      "DIALOG_INITIAL": {
+        "TITLE": "Setup CalDav for Project"
+      },
+      "FORM": {
+        "CALDAV_URL": "CalDav URL (the base URL)",
+        "CALDAV_RESOURCE": "The name of the CalDav resource (the calendar)",
+        "CALDAV_USER": "Your CalDav username",
+        "CALDAV_PASSWORD": "Your CalDav password",
+        "CALDAV_CATEGORY_FILTER": "Category to filter issues for (leave empty for none)",
+        "IS_AUTO_ADD_TO_BACKLOG": "Automatically add uncompleted CalDav todos to your backlog",
+        "IS_AUTO_POLL": "Automatically poll imported tasks for changes",
+        "IS_SEARCH_ISSUES_FROM_CALDAV": "Show uncompleted CalDav todos as suggestion when adding new tasks",
+        "IS_TRANSITION_ISSUES_ENABLED": "Automatically complete CalDav todos on task completion"
+      },
+      "FORM_SECTION": {
+        "HELP": "<p>Here you can configure SuperProductivity to list uncompleted CalDav todos for a specific project in the task creation panel in the daily planning view. They will be listed as suggestions and will provide a link to the todo as well as more information about it.</p> <p>In addition you can automatically add and sync all uncompleted todos to your task backlog.</p>",
+        "TITLE": "CalDav"
+      },
+      "ISSUE_CONTENT": {
+        "DESCRIPTION": "Description",
+        "LABELS": "Categories",
+        "MARK_AS_CHECKED": "Mark updates as checked",
+        "STATUS": "Status",
+        "SUMMARY": "Summary"
+      },
+      "S": {
+        "CALENDAR_NOT_FOUND": "CalDav: Calendar \"{{calendarName}}\" not found",
+        "CALENDAR_READ_ONLY": "CalDav: Calendar \"{{calendarName}}\" is readonly",
+        "ERR_NETWORK": "CalDav: Request failed because of a client side network error",
+        "ERR_NOT_CONFIGURED": "CalDav: Not properly configured",
+        "IMPORTED_MULTIPLE_ISSUES": "calDav: Imported {{issuesLength}} new issues from git to backlog",
+        "IMPORTED_SINGLE_ISSUE": "CalDav: Imported issue \"{{issueText}}\" from to backlog",
+        "ISSUE_NOT_FOUND": "CalDav: Todo \"{{issueId}}\" seems to be deleted on server.",
+        "ISSUE_NO_UPDATE_REQUIRED": "CalDav: No update required.",
+        "ISSUE_UPDATE": "Caldav: Uodated data for \"{{issueText}}\"",
+        "POLLING": "Caldav: Polling changes for todos"
+      }
+    },
     "CONFIG": {
       "S": {
         "UPDATE_SECTION": "Updated settings for <strong>{{sectionKey}}</strong>"
@@ -143,7 +182,8 @@
         "IS_AUTO_ADD_TO_BACKLOG": "Automatically add unresolved issues from GitLab to backlog",
         "IS_AUTO_POLL": "Automatically poll imported git issues for changes",
         "IS_SEARCH_ISSUES_FROM_GITLAB": "Show issues from git as suggestions when adding new tasks",
-        "PROJECT": "Full path or user name/project",
+        "PROJECT": "project ID or user name/project",
+        "GITLAB_BASE_URL": "Custom GitLab base URL",
         "TOKEN": "Access Token"
       },
       "FORM_SECTION": {
@@ -452,7 +492,8 @@
         "EDIT": "Edit Project",
         "SETUP_GIT": "Setup GitHub Integration",
         "SETUP_GITLAB": "Setup GitLab Integration",
-        "SETUP_JIRA": "Setup Jira Integration"
+        "SETUP_JIRA": "Setup Jira Integration",
+        "SETUP_CALDAV": "Setup Caldav Integration"
       },
       "FORM_BASIC": {
         "L_TITLE": "Project Name",
@@ -524,6 +565,12 @@
         "NO_REMOTE_DATA": "No remote data found. Upload local to Remote?",
         "TRY_LOAD_REMOTE_AGAIN": "Try to re-load data from remote once again?"
       },
+      "D_AUTH_CODE": {
+        "TITLE": "Login: {{provider}}",
+        "FOLLOW_LINK": "Please open the following link and copy the auth code provided there into the the input field below.",
+        "GET_AUTH_CODE": "Get Authorization Code",
+        "L_AUTH_CODE": "Enter Auth Code"
+      },
       "D_CONFLICT": {
         "LAST_CHANGE": "Last Change:",
         "LAST_SYNC": "Last Sync:",
@@ -562,6 +609,8 @@
         "ERROR_FALLBACK_TO_BACKUP": "Something went wrong while importing the data. Falling back to local backup.",
         "ERROR_INVALID_DATA": "Error while syncing. Invalid data",
         "IMPORTING": "Importing data",
+        "INITIAL_SYNC_ERROR": "Initial Sync failed",
+        "INCOMPLETE_CFG": "Authentication for sync failed. Please check your Config!",
         "SUCCESS": "Data imported",
         "UNKNOWN_ERROR": "Unknown Sync Error: {{err}}",
         "UPLOAD_ERROR": "Unknown Upload Error (Settings correct?): {{err}}"
@@ -597,7 +646,7 @@
         "ATTACHMENTS": "Attachments ({{nr}})",
         "FROM_PARENT": "(from Parent)",
         "LOCAL_ATTACHMENTS": "Local Attachments",
-        "NOTES": "Notes",
+        "NOTES": "Description",
         "PARENT": "Parent",
         "REMINDER": "Reminder",
         "REPEAT": "Repeat",
@@ -799,6 +848,7 @@
           "TIME_AS_MILLISECONDS": "Time as milliseconds",
           "TIME_AS_STRING": "Time as string (e.g. 5h 23m)",
           "TITLES_AND_SUB_TASK_TITLES": "Titles and Sub Task Titles",
+          "NOTES": "Task Descriptions",
           "WORKLOG": "Worklog"
         },
         "OPTIONS": "Options",
@@ -909,6 +959,7 @@
       "TOGGLE_BACKLOG": "Show/Hide Task Backlog",
       "TOGGLE_BOOKMARKS": "Show/Hide Bookmark Bar",
       "TOGGLE_PLAY": "Start/Stop Task",
+      "TOGGLE_SIDE_NAV": "Show & Focus/Hide Sidenav",
       "ZOOM_DEFAULT": "Zoom default (Desktop only)",
       "ZOOM_IN": "Zoom in (Desktop only)",
       "ZOOM_OUT": "Zoom out (Desktop only)"
@@ -930,7 +981,8 @@
       "RU": "Russian",
       "TITLE": "Language",
       "TR": "Turkish",
-      "ZH": "Chinese"
+      "ZH": "Simplified Chinese",
+      "ZH_TW": "Traditional Chinese"
     },
     "MISC": {
       "DEFAULT_PROJECT": "Default project to use for tasks if none is specified",
@@ -947,6 +999,7 @@
       "IS_NOTIFY_WHEN_TIME_ESTIMATE_EXCEEDED": "Notify when time estimate was exceeded",
       "IS_TRAY_SHOW_CURRENT_TASK": "Show current task in the tray / status menu (desktop only)",
       "IS_TURN_OFF_MARKDOWN": "Turn off markdown parsing for notes",
+      "TASK_NOTES_TPL": "Task description template",
       "TITLE": "Misc Settings"
     },
     "POMODORO": {
@@ -1022,7 +1075,6 @@
     "PROCRASTINATE": "Procrastinate",
     "PROJECTS": "Projects",
     "PROJECT_MENU": "Project Menu",
-    "PROJECT_SETTINGS": "Project Settings",
     "SCHEDULED": "Scheduled",
     "SETTINGS": "Settings",
     "TAGS": "Tags",
@@ -1099,7 +1151,7 @@
   "PS": {
     "GLOBAL_SETTINGS": "Global Settings",
     "ISSUE_INTEGRATION": "Issue Integration",
-    "PRIVATE_POLICY": "Private Policy",
+    "PRIVACY_POLICY": "Privacy Policy",
     "PRODUCTIVITY_HELPER": "Productivity Helper",
     "PROJECT_SETTINGS": "Project Specific Settings",
     "PROVIDE_FEEDBACK": "Provide Feedback",

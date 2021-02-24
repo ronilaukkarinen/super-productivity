@@ -1,4 +1,4 @@
-// tslint:disable:max-line-length
+/* eslint-disable max-len */
 import { T } from '../../../t.const';
 import { ConfigFormSection, DropboxSyncConfig, SyncConfig } from '../global-config.model';
 import { SyncProvider } from '../../../imex/sync/sync-provider.model';
@@ -34,7 +34,7 @@ export const SYNC_FORM: ConfigFormSection<SyncConfig> = {
         required: true,
         options: [
           {label: SyncProvider.Dropbox, value: SyncProvider.Dropbox},
-          ...( IS_F_DROID_APP ? [] : [{label: SyncProvider.GoogleDrive, value: SyncProvider.GoogleDrive}]),
+          ...(IS_F_DROID_APP ? [] : [{label: SyncProvider.GoogleDrive, value: SyncProvider.GoogleDrive}]),
           {label: SyncProvider.WebDAV, value: SyncProvider.WebDAV},
         ],
       },
@@ -52,7 +52,8 @@ export const SYNC_FORM: ConfigFormSection<SyncConfig> = {
             // text: `<p>Please open the following link and copy the auth code provided there</p>`,
             text: T.F.SYNC.FORM.DROPBOX.FOLLOW_LINK,
           },
-        }, {
+        },
+        {
           type: 'tpl',
           templateOptions: {
             tag: 'p',

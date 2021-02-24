@@ -2,10 +2,10 @@
      [@taskAdditionalInfoTaskChange]="task.id"
      class="wrapper">
 
-  <header *ngIf="(layoutService.isNotesOver$|async)"
+  <header *ngIf="IS_TOUCH_ONLY || (layoutService.isNotesOver$|async)"
           class="task-title-wrapper">
     <button (click)="close()"
-            *ngIf="layoutService.isScreenXs$|async"
+            *ngIf="(layoutService.isScreenXs$|async)"
             mat-icon-button>
       <mat-icon>arrow_back</mat-icon>
     </button>
@@ -15,7 +15,7 @@
         class="task-title"
         contentEditableOnClick
         contenteditable="true"
-        tabindex="2">{{task.title}}</h2>
+    >{{task.title}}</h2>
     <!--    <button mat-icon-button>-->
     <!--      <mat-icon>more_vert</mat-icon>-->
     <!--    </button>-->
@@ -161,7 +161,7 @@
                        (keyboardUnToggle)="focusItem(noteWrapperElRef)"
                        [isFocus]="isFocusNotes"
                        [isShowControls]="true"
-                       [model]="task.notes"></inline-markdown>
+                       [model]="task.notes|| defaultTaskNotes"></inline-markdown>
     </ng-container>
   </task-additional-info-item>
 

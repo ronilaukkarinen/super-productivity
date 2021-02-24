@@ -1,7 +1,7 @@
 <form (submit)="addTask()"
+      [class.isElevated]="isElevated"
       [class.mat-elevation-z3]="!isElevated"
       [class.mat-elevation-z4]="isElevated"
-      [class.isElevated]="isElevated"
       class="add-task-form">
   <div class="input-wrapper">
     <div *ngIf="(isLoading$|async)"
@@ -16,6 +16,7 @@
       <mat-icon *ngIf="!isAddToBacklog">playlist_add</mat-icon>
     </button>
     <input #inputEl
+           [tabindex]="tabindex"
            (blur)="onBlur($event)"
            [formControl]="taskSuggestionsCtrl"
            [matAutocomplete]="autoEl"

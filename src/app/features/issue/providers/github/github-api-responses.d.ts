@@ -18,7 +18,7 @@ export type GithubOriginalUser = Readonly<{
   events_url: string;
   received_events_url: string;
   type: 'User';
-  site_admin: boolean
+  site_admin: boolean;
 }>;
 export type GithubOriginalLabel = Readonly<{
   id: number;
@@ -27,7 +27,7 @@ export type GithubOriginalLabel = Readonly<{
   name: string;
   description: string;
   color: string;
-  default: boolean
+  default: boolean;
 }>;
 
 export type GithubOriginalMileStone = Readonly<{
@@ -36,6 +36,7 @@ export type GithubOriginalMileStone = Readonly<{
   labels_url: string;
   id: number;
   node_id: string;
+  // eslint-disable-next-line id-blacklist
   number: number;
   state: GithubOriginalState;
   title: string;
@@ -59,7 +60,7 @@ export type GithubOriginalPullRequest = Readonly<{
 export type GithubOriginalPermissions = Readonly<{
   admin: boolean;
   push: boolean;
-  pull: boolean
+  pull: boolean;
 }>;
 
 export type GithubOriginalRepository = Readonly<{
@@ -149,6 +150,7 @@ export type GithubOriginalIssue = Readonly<{
   comments_url: string;
   events_url: string;
   html_url: string;
+  // eslint-disable-next-line id-blacklist
   number: number;
   state: GithubOriginalState;
   title: string;

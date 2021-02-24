@@ -61,7 +61,7 @@ interface JiraRequestCfg {
     [key: string]: string | boolean | number | string[];
   };
   transform?: (res: any, jiraCfg?: JiraCfg) => any;
-  body?: {};
+  body?: Record<string, unknown>;
 }
 
 @Injectable({
@@ -110,7 +110,6 @@ export class JiraApiService {
 
   issuePicker$(searchTerm: string, cfg: JiraCfg): Observable<SearchResultItem[]> {
     const searchStr = `${searchTerm}`;
-    const jql = (cfg.searchJqlQuery ? `${encodeURIComponent(cfg.searchJqlQuery)}` : '');
 
     return this._sendRequest$({
       jiraReqCfg: {
@@ -120,7 +119,7 @@ export class JiraApiService {
           showSubTasks: true,
           showSubTaskParent: true,
           query: searchStr,
-          currentJQL: jql
+          currentJQL: cfg.searchJqlQuery
         },
         transform: mapToSearchResults
         // NOTE: we pass the cfg as well to avoid race conditions
@@ -250,11 +249,11 @@ export class JiraApiService {
     comment,
     cfg
   }: {
-    issueId: string,
-    started: string,
-    timeSpent: number,
-    comment: string,
-    cfg: JiraCfg
+    issueId: string;
+    started: string;
+    timeSpent: number;
+    comment: string;
+    cfg: JiraCfg;
   }): Observable<any> {
     const worklog = {
       started: moment(started).locale('en').format(JIRA_DATETIME_FORMAT),
@@ -298,9 +297,9 @@ export class JiraApiService {
     cfg,
     isForce = false,
   }: {
-    jiraReqCfg: JiraRequestCfg,
-    cfg: JiraCfg,
-    isForce?: boolean
+    jiraReqCfg: JiraRequestCfg;
+    cfg: JiraCfg;
+    isForce?: boolean;
   }): Observable<any> {
     return this._isInterfacesReadyIfNeeded$.pipe(
       take(1),
@@ -466,12 +465,12 @@ export class JiraApiService {
     transform,
     jiraCfg
   }: {
-    promiseResolve: any,
-    promiseReject: any,
-    requestId: string,
-    requestInit: RequestInit,
-    transform: any,
-    jiraCfg: JiraCfg
+    promiseResolve: any;
+    promiseReject: any;
+    requestId: string;
+    requestInit: RequestInit;
+    transform: any;
+    jiraCfg: JiraCfg;
   }): JiraRequestLogItem {
     return {
       transform,

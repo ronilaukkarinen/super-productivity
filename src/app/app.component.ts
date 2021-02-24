@@ -213,9 +213,9 @@ export class AppComponent implements OnDestroy {
 
   private _initElectronErrorHandler() {
     (this._electronService.ipcRenderer as typeof ipcRenderer).on(IPC.ERROR, (ev, data: {
-      error: any,
-      stack: any,
-      errorStr: string | unknown,
+      error: any;
+      stack: any;
+      errorStr: string | unknown;
     }) => {
       const errMsg = (typeof data.errorStr === 'string')
         ? data.errorStr
@@ -248,20 +248,26 @@ export class AppComponent implements OnDestroy {
       // try to avoid data-loss
       Promise.all([
         navigator.storage.persisted(),
-      ]).then(([persisted]) => {
+      ]).then(([persisted]): any => {
         if (!persisted) {
-          navigator.storage.persist().then(granted => {
-            if (granted) {
-              console.log('Persistent store granted');
-            } else {
-              const msg = T.GLOBAL_SNACK.PERSISTENCE_DISALLOWED;
-              console.warn('Persistence not allowed');
-              this._snackService.open({msg});
-            }
-          });
+          return navigator.storage.persist()
+            .then(granted => {
+              if (granted) {
+                console.log('Persistent store granted');
+              } else {
+                const msg = T.GLOBAL_SNACK.PERSISTENCE_DISALLOWED;
+                console.warn('Persistence not allowed');
+                this._snackService.open({msg});
+              }
+            });
+
         } else {
           console.log('Persistence already allowed');
         }
+      }).catch((e) => {
+        console.log(e);
+        const msg = T.GLOBAL_SNACK.PERSISTENCE_DISALLOWED;
+        this._snackService.open({msg});
       });
     }
   }

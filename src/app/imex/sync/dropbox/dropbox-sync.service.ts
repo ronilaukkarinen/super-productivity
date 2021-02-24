@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { concatMap, distinctUntilChanged, first, tap } from 'rxjs/operators';
+import { concatMap, distinctUntilChanged } from 'rxjs/operators';
 import { DropboxApiService } from './dropbox-api.service';
 import { DROPBOX_SYNC_FILE_PATH } from './dropbox.const';
 import { AppDataComplete, SyncGetRevResult } from '../sync.model';
@@ -18,11 +18,6 @@ export class DropboxSyncService implements SyncProviderServiceInterface {
   isReady$: Observable<boolean> = this._dataInitService.isAllDataLoadedInitially$.pipe(
     concatMap(() => this._dropboxApiService.isTokenAvailable$),
     distinctUntilChanged(),
-  );
-
-  isReadyForRequests$: Observable<boolean> = this.isReady$.pipe(
-    tap((isReady) => !isReady && new Error('Dropbox Sync not ready')),
-    first(),
   );
 
   constructor(
@@ -60,7 +55,7 @@ export class DropboxSyncService implements SyncProviderServiceInterface {
     }
   }
 
-  async downloadAppData(localRev: string): Promise<{ rev: string, data: AppDataComplete }> {
+  async downloadAppData(localRev: string): Promise<{ rev: string; data: AppDataComplete }> {
     const r = await this._dropboxApiService.download<AppDataComplete>({
       path: DROPBOX_SYNC_FILE_PATH,
       localRev,

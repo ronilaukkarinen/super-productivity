@@ -1,4 +1,4 @@
-// tslint:disable:max-line-length
+/* eslint-disable max-len */
 import { ConfigFormSection, LimitedFormlyFieldConfig } from '../global-config.model';
 import { T } from '../../../t.const';
 import { IS_ELECTRON } from '../../../app.constants';
@@ -75,20 +75,20 @@ export const KEYBOARD_SETTINGS_FORM_CFG: ConfigFormSection<KeyboardConfig> = {
         label: T.GCF.KEYBOARD.ADD_NEW_NOTE
       },
     },
-    // {
-    //   key: 'openProjectNotes',
-    //   type: 'keyboard',
-    //   templateOptions: {
-    //     label: T.GCF.KEYBOARD.OPEN_PROJECT_NOTES
-    //   },
-    // },
-    // {
-    //   key: 'openDistractionPanel',
-    //   type: 'keyboard',
-    //   templateOptions: {
-    //     label: T.GCF.KEYBOARD.OPEN_DISTRACTION_PANEL
-    //   },
-    // },
+    {
+      key: 'toggleSideNav',
+      type: 'keyboard',
+      templateOptions: {
+        label: T.GCF.KEYBOARD.TOGGLE_SIDE_NAV
+      },
+    },
+    {
+      key: 'openProjectNotes',
+      type: 'keyboard',
+      templateOptions: {
+        label: T.GCF.KEYBOARD.OPEN_PROJECT_NOTES
+      },
+    },
     // {
     //   key: 'showHelp',
     //   type: 'keyboard',
@@ -312,4 +312,4 @@ export const KEYBOARD_SETTINGS_FORM_CFG: ConfigFormSection<KeyboardConfig> = {
     },
   ]
 };
-// tslint:enable:max-line-length
+/* eslint-enable max-len */

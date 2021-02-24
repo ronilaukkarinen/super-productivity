@@ -19,6 +19,7 @@ import {
   AddTask,
   AddTaskReminder,
   AddTimeSpent,
+  ConvertToMainTask,
   DeleteMainTasks,
   DeleteTask,
   MoveSubTask,
@@ -53,7 +54,7 @@ import {
   selectIsTaskDataLoaded,
   selectMainTasksWithoutTag,
   selectSelectedTask,
-  selectSelectedTaskId,
+  selectSelectedTaskId, selectStartableTasks,
   selectTaskAdditionalInfoTargetPanel,
   selectTaskById,
   selectTaskByIdWithSubTaskData,
@@ -140,6 +141,10 @@ export class TaskService {
     select(selectAllTasks),
   );
 
+  allStartableTasks$: Observable<Task[]> = this._store.pipe(
+    select(selectStartableTasks),
+  );
+
   // META FIELDS
   // -----------
   currentTaskProgress$: Observable<number> = this.currentTask$.pipe(
@@ -193,7 +198,7 @@ export class TaskService {
   }
 
   startFirstStartable() {
-    this._workContextService.startableTasks$.pipe(take(1)).subscribe(tasks => {
+    this._workContextService.startableTasksForActiveContext$.pipe(take(1)).subscribe(tasks => {
       if (tasks[0] && !this.currentTaskId) {
         this.setCurrentId(tasks[0].id);
       }
@@ -381,6 +386,13 @@ export class TaskService {
     }
   }
 
+  focusFirstTaskIfVisible() {
+    const tEl = document.getElementsByTagName('task');
+    if (tEl && tEl[0]) {
+      (tEl[0] as HTMLElement).focus();
+    }
+  }
+
   moveToToday(id: string, isMoveToTop: boolean = false) {
     const workContextId = this._workContextService.activeWorkContextId as string;
     const workContextType = this._workContextService.activeWorkContextType as WorkContextType;
@@ -420,7 +432,7 @@ export class TaskService {
   }
 
   roundTimeSpentForDay({day, taskIds, roundTo, isRoundUp = false, projectId}: {
-    day: string, taskIds: string[], roundTo: RoundTimeOption, isRoundUp: boolean, projectId?: string | null
+    day: string; taskIds: string[]; roundTo: RoundTimeOption; isRoundUp: boolean; projectId?: string | null;
   }) {
     this._store.dispatch(new RoundTimeSpentForDay({day, taskIds, roundTo, isRoundUp, projectId}));
   }
@@ -448,7 +460,12 @@ export class TaskService {
     if (workContextType === WorkContextType.PROJECT) {
       task$.subscribe(task => {
         if (!task) {
-          console.log({taskId, workContextType, workContextId, activeWCId: this._workContextService.activeWorkContextId});
+          console.log({
+            taskId,
+            workContextType,
+            workContextId,
+            activeWCId: this._workContextService.activeWorkContextId
+          });
           throw new Error('Startable task not found');
         }
         if (task.parentId) {
@@ -543,6 +560,11 @@ export class TaskService {
     this.updateUi(id, {_showSubTasksMode: ShowSubTasksMode.HideAll});
   }
 
+  async convertToMainTask(task: Task) {
+    const parent = await this.getByIdOnce$(task.parentId as string).toPromise();
+    this._store.dispatch(new ConvertToMainTask({task, parentTagIds: parent.tagIds}));
+  }
+
   // GLOBAL TASK MODEL STUFF
   // -----------------------
 
@@ -582,6 +604,12 @@ export class TaskService {
     ) as Task[];
   }
 
+  async getAllTaskByIssueTypeForProject$(projectId: string, issueProviderKey: IssueProviderKey): Promise<Task[]> {
+    const allTasks = await this.getAllTasksForProject(projectId);
+    return allTasks
+      .filter(task => task.issueType === issueProviderKey);
+  }
+
   async getAllIssueIdsForProject(projectId: string, issueProviderKey: IssueProviderKey): Promise<string[] | number[]> {
     const allTasks = await this.getAllTasksForProject(projectId);
     return allTasks
@@ -591,15 +619,16 @@ export class TaskService {
 
   // TODO check with new archive
   async checkForTaskWithIssueInProject(issueId: string | number, issueProviderKey: IssueProviderKey, projectId: string): Promise<{
-    task: Task,
-    subTasks: Task[] | null,
-    isFromArchive: boolean,
+    task: Task;
+    subTasks: Task[] | null;
+    isFromArchive: boolean;
   } | null> {
     if (!projectId) {
       throw new Error('No project id');
     }
 
-    const findTaskFn = (task: Task | ArchiveTask | undefined) => task && task.issueId === issueId && task.issueType === issueProviderKey && task.projectId === projectId;
+    const findTaskFn = (task: Task | ArchiveTask | undefined) =>
+      task && task.issueId === issueId && task.issueType === issueProviderKey && task.projectId === projectId;
     const allTasks = await this._allTasksWithSubTaskData$.pipe(first()).toPromise() as Task[];
     const taskWithSameIssue: Task = allTasks.find(findTaskFn) as Task;
 

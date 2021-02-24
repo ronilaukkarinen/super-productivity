@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Actions, Effect, ofType } from '@ngrx/effects';
-import { select, Store } from '@ngrx/store';
+import { Action, select, Store } from '@ngrx/store';
 import { concatMap, filter, first, map, switchMap, take, tap } from 'rxjs/operators';
 import {
   AddProject,
@@ -23,6 +23,7 @@ import { getWorklogStr } from '../../../util/get-work-log-str';
 import {
   AddTask,
   AddTimeSpent,
+  ConvertToMainTask,
   DeleteMainTasks,
   DeleteTask,
   MoveToArchive,
@@ -108,8 +109,9 @@ export class ProjectEffects {
       TaskActionTypes.MoveToOtherProject,
       TaskActionTypes.RestoreTask,
       TaskActionTypes.MoveToArchive,
+      TaskActionTypes.ConvertToMainTask,
     ),
-    switchMap((a: AddTask | DeleteTask | MoveToOtherProject | MoveToArchive | RestoreTask) => {
+    switchMap((a: AddTask | DeleteTask | MoveToOtherProject | MoveToArchive | RestoreTask | ConvertToMainTask | Action) => {
       let isChange = false;
       switch (a.type) {
         case TaskActionTypes.AddTask:
@@ -126,6 +128,9 @@ export class ProjectEffects {
           break;
         case TaskActionTypes.RestoreTask:
           isChange = !!(a as RestoreTask).payload.task.projectId;
+          break;
+        case TaskActionTypes.ConvertToMainTask:
+          isChange = !!(a as ConvertToMainTask).payload.task.projectId;
           break;
       }
       return isChange
@@ -334,6 +339,7 @@ export class ProjectEffects {
   //     tap(({activeId, wrongProjectTasks, allTasks}) => {
   //       const allIds = allTasks.map(t => t.id);
   //       const wrongProjectTaskIds = wrongProjectTasks.map(t => t.id);
+  // eslint-disable-next-line max-len
   //       const r = confirm('Nooo! We found some tasks with the wrong project id. It is strongly recommended to delete them to avoid further data corruption. Delete them now?');
   //       if (r) {
   //         this._projectService.update(activeId, {
@@ -363,7 +369,7 @@ export class ProjectEffects {
   //     tap(({activeId, wrongProjectTasks, allTasks}) => {
   //       const allIds = allTasks.map(t => t.id);
   //       const wrongProjectTaskIds = wrongProjectTasks.map(t => t.id);
-  // tslint:disable-next-line:max-line-length
+  // eslint-disable-next-line max-len
   //       const r = confirm('Nooo! We found some backlog tasks with the wrong project id. It is strongly recommended to delete them to avoid further data corruption. Delete them now?');
   //       if (r) {
   //         this._projectService.update(activeId, {
@@ -393,6 +399,7 @@ export class ProjectEffects {
   //     tap((arg) => console.log('Error INFO Today:', arg)),
   //     tap(({activeId, allTasks}) => {
   //       const allIds = allTasks.map(t => t && t.id);
+  // eslint-disable-next-line max-len
   //       const r = confirm('Nooo! We found some tasks with no data. It is strongly recommended to delete them to avoid further data corruption. Delete them now?');
   //       if (r) {
   //         this._projectService.update(activeId, {
@@ -444,6 +451,7 @@ export class ProjectEffects {
   //     tap((arg) => console.log('Error INFO Today:', arg)),
   //     tap(({activeId, allTasks}) => {
   //       const allIds = allTasks.map(t => t && t.id);
+  // eslint-disable-next-line max-len
   //       const r = confirm('Nooo! We found some backlog tasks with no data. It is strongly recommended to delete them to avoid further data corruption. Delete them now?');
   //       if (r) {
   //         this._projectService.update(activeId, {
@@ -554,16 +562,17 @@ export class ProjectEffects {
 
   private async _removeAllRepeatingTasksForProject(projectIdToDelete: string): Promise<any> {
     const taskRepeatCfgs: TaskRepeatCfg[] = await this._taskRepeatCfgService.taskRepeatCfgs$.pipe(first()).toPromise();
+    const allCfgIdsForProject = taskRepeatCfgs.filter(cfg => cfg.projectId === projectIdToDelete);
 
-    const cfgsIdsToRemove: string[] = taskRepeatCfgs
-      .filter(cfg => cfg.projectId === projectIdToDelete && (!cfg.tagIds || cfg.tagIds.length === 0))
+    const cfgsIdsToRemove: string[] = allCfgIdsForProject
+      .filter(cfg => (!cfg.tagIds || cfg.tagIds.length === 0))
       .map(cfg => cfg.id as string);
     if (cfgsIdsToRemove.length > 0) {
       this._taskRepeatCfgService.deleteTaskRepeatCfgsNoTaskCleanup(cfgsIdsToRemove);
     }
 
-    const cfgsToUpdate: string[] = taskRepeatCfgs
-      .filter(cfg => cfg.projectId === projectIdToDelete && cfg.tagIds && cfg.tagIds.length > 0)
+    const cfgsToUpdate: string[] = allCfgIdsForProject
+      .filter(cfg => cfg.tagIds && cfg.tagIds.length > 0)
       .map(taskRepeatCfg => taskRepeatCfg.id as string);
     if (cfgsToUpdate.length > 0) {
       this._taskRepeatCfgService.updateTaskRepeatCfgs(cfgsToUpdate, {projectId: null});

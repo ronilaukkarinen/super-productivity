@@ -24,7 +24,7 @@ import { fadeAnimation } from '../../../ui/animations/fade.ani';
 import { swirlAnimation } from '../../../ui/animations/swirl-in-out.ani';
 import { DialogTimeEstimateComponent } from '../dialog-time-estimate/dialog-time-estimate.component';
 import { MatDialog } from '@angular/material/dialog';
-import { isTouchOnly } from '../../../util/is-touch';
+import { isTouchOnly, IS_TOUCH_ONLY } from '../../../util/is-touch';
 import { DialogAddTaskReminderComponent } from '../dialog-add-task-reminder/dialog-add-task-reminder.component';
 import { AddTaskReminderInterface } from '../dialog-add-task-reminder/add-task-reminder-interface';
 import { ReminderCopy } from '../../reminder/reminder.model';
@@ -48,6 +48,7 @@ import { ipcRenderer } from 'electron';
 import { devError } from '../../../util/dev-error';
 import { SS_JIRA_WONKY_COOKIE } from '../../../core/persistence/ls-keys.const';
 import { IS_MOBILE } from '../../../util/is-mobile';
+import { GlobalConfigService } from '../../config/global-config.service';
 
 interface IssueAndType {
   id: string | number | null;
@@ -68,6 +69,7 @@ export class TaskAdditionalInfoComponent implements AfterViewInit, OnDestroy {
   @ViewChildren(TaskAdditionalInfoItemComponent) itemEls?: QueryList<TaskAdditionalInfoItemComponent>;
   @ViewChild('attachmentPanelElRef') attachmentPanelElRef?: TaskAdditionalInfoItemComponent;
 
+  IS_TOUCH_ONLY: boolean = IS_TOUCH_ONLY;
   ShowSubTasksMode: typeof ShowSubTasksMode = ShowSubTasksMode;
   selectedItemIndex: number = 0;
   isFocusNotes: boolean = false;
@@ -152,6 +154,7 @@ export class TaskAdditionalInfoComponent implements AfterViewInit, OnDestroy {
       : [])
   );
   IS_MOBILE: boolean = IS_MOBILE;
+  defaultTaskNotes: string = '';
 
   private _focusTimeout?: number;
   private _subs: Subscription = new Subscription();
@@ -161,6 +164,7 @@ export class TaskAdditionalInfoComponent implements AfterViewInit, OnDestroy {
     public attachmentService: TaskAttachmentService,
     public taskService: TaskService,
     public layoutService: LayoutService,
+    private _globalConfigService: GlobalConfigService,
     private _issueService: IssueService,
     private _reminderService: ReminderService,
     private _taskRepeatCfgService: TaskRepeatCfgService,
@@ -172,6 +176,7 @@ export class TaskAdditionalInfoComponent implements AfterViewInit, OnDestroy {
   ) {
     // NOTE: needs to be assigned here before any setter is called
     this._subs.add(this.issueAttachments$.subscribe((attachments) => this.issueAttachments = attachments));
+    this._subs.add(this._globalConfigService.misc$.subscribe((misc) => this.defaultTaskNotes = misc.taskNotesTpl));
     this._subs.add(this.issueData$.subscribe((issueData) => {
       this.issueData = issueData;
       this._cd.detectChanges();
@@ -200,27 +205,6 @@ export class TaskAdditionalInfoComponent implements AfterViewInit, OnDestroy {
     // this.issueIdAndType$.subscribe((v) => console.log('issueIdAndType$', v));
     // this.issueDataTrigger$.subscribe((v) => console.log('issueDataTrigger$', v));
     // this.issueData$.subscribe((v) => console.log('issueData$', v));
-  }
-
-  @HostListener('dragenter', ['$event']) onDragEnter(ev: DragEvent) {
-    this._dragEnterTarget = ev.target as HTMLElement;
-    ev.preventDefault();
-    ev.stopPropagation();
-    this.isDragOver = true;
-  }
-
-  @HostListener('dragleave', ['$event']) onDragLeave(ev: DragEvent) {
-    if (this._dragEnterTarget === (ev.target as HTMLElement)) {
-      ev.preventDefault();
-      ev.stopPropagation();
-      this.isDragOver = false;
-    }
-  }
-
-  @HostListener('drop', ['$event']) onDrop(ev: DragEvent) {
-    this._attachmentService.createFromDrop(ev, this.task.id);
-    ev.stopPropagation();
-    this.isDragOver = false;
   }
 
   get task(): TaskWithSubTasks {
@@ -265,6 +249,27 @@ export class TaskAdditionalInfoComponent implements AfterViewInit, OnDestroy {
     return this._taskData && this._taskData.timeEstimate && (this._taskData.timeSpent / this._taskData.timeEstimate) * 100;
   }
 
+  @HostListener('dragenter', ['$event']) onDragEnter(ev: DragEvent) {
+    this._dragEnterTarget = ev.target as HTMLElement;
+    ev.preventDefault();
+    ev.stopPropagation();
+    this.isDragOver = true;
+  }
+
+  @HostListener('dragleave', ['$event']) onDragLeave(ev: DragEvent) {
+    if (this._dragEnterTarget === (ev.target as HTMLElement)) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      this.isDragOver = false;
+    }
+  }
+
+  @HostListener('drop', ['$event']) onDrop(ev: DragEvent) {
+    this._attachmentService.createFromDrop(ev, this.task.id);
+    ev.stopPropagation();
+    this.isDragOver = false;
+  }
+
   ngAfterViewInit(): void {
     this._subs.add(this.taskService.taskAdditionalInfoTargetPanel$.pipe(
       // hacky but we need a minimal delay to make sure selectedTaskId is ready
@@ -291,7 +296,9 @@ export class TaskAdditionalInfoComponent implements AfterViewInit, OnDestroy {
   }
 
   changeTaskNotes($event: string) {
-    this.taskService.update(this.task.id, {notes: $event});
+    if (!this.defaultTaskNotes || ($event && $event.trim() !== this.defaultTaskNotes.trim())) {
+      this.taskService.update(this.task.id, {notes: $event});
+    }
   }
 
   close() {

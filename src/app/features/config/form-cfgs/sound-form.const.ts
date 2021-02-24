@@ -1,4 +1,4 @@
-// tslint:disable:max-line-length
+/* eslint-disable max-len */
 import { ConfigFormSection, SoundConfig } from '../global-config.model';
 import { T } from '../../../t.const';
 import { playDoneSound } from '../../tasks/util/play-done-sound';
@@ -42,7 +42,7 @@ export const SOUND_FORM_CFG: ConfigFormSection<SoundConfig> = {
         hideExpression: ((model: any) => {
           return !model.isPlayDoneSound;
         }),
-        change: ({ model }) => playDoneSound(model),
+        change: ({model}) => playDoneSound(model),
       },
     },
     {

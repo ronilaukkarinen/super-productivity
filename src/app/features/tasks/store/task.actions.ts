@@ -34,6 +34,7 @@ export enum TaskActionTypes {
 
   // Sub Task Actions
   AddSubTask = '[Task] Add SubTask',
+  ConvertToMainTask = '[Task] Convert SubTask to main task',
 
   // Other
   RestoreTask = '[Task] Restore Task',
@@ -66,12 +67,12 @@ export class AddTask implements Action {
   readonly type: string = TaskActionTypes.AddTask;
 
   constructor(public payload: {
-    task: Task,
-    issue?: IssueDataReduced,
-    workContextId: string,
-    workContextType: WorkContextType,
-    isAddToBacklog: boolean,
-    isAddToBottom: boolean,
+    task: Task;
+    issue?: IssueDataReduced;
+    workContextId: string;
+    workContextType: WorkContextType;
+    isAddToBacklog: boolean;
+    isAddToBottom: boolean;
   }) {
   }
 }
@@ -93,7 +94,7 @@ export class UpdateTaskUi implements Action {
 export class UpdateTaskTags implements Action {
   readonly type: string = TaskActionTypes.UpdateTaskTags;
 
-  constructor(public payload: { task: Task; newTagIds: string[], oldTagIds: string[] }) {
+  constructor(public payload: { task: Task; newTagIds: string[]; oldTagIds: string[] }) {
   }
 }
 
@@ -107,7 +108,7 @@ export class RemoveTagsForAllTasks implements Action {
 export class ToggleTaskShowSubTasks implements Action {
   readonly type: string = TaskActionTypes.ToggleTaskShowSubTasks;
 
-  constructor(public payload: { taskId: string, isShowLess: boolean, isEndless: boolean }) {
+  constructor(public payload: { taskId: string; isShowLess: boolean; isEndless: boolean }) {
   }
 }
 
@@ -140,10 +141,10 @@ export class MoveSubTask implements Action {
   readonly type: string = TaskActionTypes.MoveSubTask;
 
   constructor(public payload: {
-    taskId: string,
-    srcTaskId: string,
-    targetTaskId: string,
-    newOrderedIds: string[]
+    taskId: string;
+    srcTaskId: string;
+    targetTaskId: string;
+    newOrderedIds: string[];
   }) {
   }
 }
@@ -151,28 +152,28 @@ export class MoveSubTask implements Action {
 export class MoveSubTaskUp implements Action {
   readonly type: string = TaskActionTypes.MoveSubTaskUp;
 
-  constructor(public payload: { id: string, parentId: string }) {
+  constructor(public payload: { id: string; parentId: string }) {
   }
 }
 
 export class MoveSubTaskDown implements Action {
   readonly type: string = TaskActionTypes.MoveSubTaskDown;
 
-  constructor(public payload: { id: string, parentId: string }) {
+  constructor(public payload: { id: string; parentId: string }) {
   }
 }
 
 export class AddTimeSpent implements Action {
   readonly type: string = TaskActionTypes.AddTimeSpent;
 
-  constructor(public payload: { task: Task; date: string, duration: number }) {
+  constructor(public payload: { task: Task; date: string; duration: number }) {
   }
 }
 
 export class RemoveTimeSpent implements Action {
   readonly type: string = TaskActionTypes.RemoveTimeSpent;
 
-  constructor(public payload: { id: string, date: string, duration: number }) {
+  constructor(public payload: { id: string; date: string; duration: number }) {
   }
 }
 
@@ -180,35 +181,42 @@ export class RemoveTimeSpent implements Action {
 export class AddTaskReminder implements Action {
   readonly type: string = TaskActionTypes.AddTaskReminder;
 
-  constructor(public payload: { task: Task, remindAt: number, isMoveToBacklog: boolean }) {
+  constructor(public payload: { task: Task; remindAt: number; isMoveToBacklog: boolean }) {
   }
 }
 
 export class UpdateTaskReminder implements Action {
   readonly type: string = TaskActionTypes.UpdateTaskReminder;
 
-  constructor(public payload: { id: string, title: string, reminderId: string, remindAt: number }) {
+  constructor(public payload: { id: string; title: string; reminderId: string; remindAt: number }) {
   }
 }
 
 export class RemoveTaskReminder implements Action {
   readonly type: string = TaskActionTypes.RemoveTaskReminder;
 
-  constructor(public payload: { id: string, reminderId: string }) {
+  constructor(public payload: { id: string; reminderId: string }) {
   }
 }
 
 export class RestoreTask implements Action {
   readonly type: string = TaskActionTypes.RestoreTask;
 
-  constructor(public payload: { task: TaskWithSubTasks, subTasks: Task[] }) {
+  constructor(public payload: { task: TaskWithSubTasks; subTasks: Task[] }) {
   }
 }
 
 export class AddSubTask implements Action {
   readonly type: string = TaskActionTypes.AddSubTask;
 
-  constructor(public payload: { task: Task, parentId: string }) {
+  constructor(public payload: { task: Task; parentId: string }) {
+  }
+}
+
+export class ConvertToMainTask implements Action {
+  readonly type: string = TaskActionTypes.ConvertToMainTask;
+
+  constructor(public payload: { task: Task; parentTagIds: string[] }) {
   }
 }
 
@@ -222,7 +230,7 @@ export class MoveToArchive implements Action {
 export class MoveToOtherProject implements Action {
   readonly type: string = TaskActionTypes.MoveToOtherProject;
 
-  constructor(public payload: { task: TaskWithSubTasks; targetProjectId: string; }) {
+  constructor(public payload: { task: TaskWithSubTasks; targetProjectId: string }) {
   }
 }
 
@@ -233,7 +241,7 @@ export class ToggleStart implements Action {
 export class RoundTimeSpentForDay implements Action {
   readonly type: string = TaskActionTypes.RoundTimeSpentForDay;
 
-  constructor(public payload: { day: string, taskIds: string[], roundTo: RoundTimeOption, isRoundUp: boolean, projectId?: string|null }) {
+  constructor(public payload: { day: string; taskIds: string[]; roundTo: RoundTimeOption; isRoundUp: boolean; projectId?: string | null }) {
   }
 }
 
@@ -261,6 +269,7 @@ export type TaskActions
   | RemoveTaskReminder
   | RestoreTask
   | AddSubTask
+  | ConvertToMainTask
   | ToggleStart
   | RoundTimeSpentForDay
   | MoveToOtherProject

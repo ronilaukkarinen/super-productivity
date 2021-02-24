@@ -939,13 +939,14 @@
       "JA": "Japansk",
       "KO": "Koreansk",
       "LABEL": "Velg et språk",
-      "NB":"Norsk Bokmål",
+      "NB": "Norsk Bokmål",
       "NL": "Nederlandsk",
       "PT": "Portugisisk",
       "RU": "Russisk",
       "TITLE": "Språk",
       "TR": "Tyrkisk",
-      "ZH": "Kinesisk"
+      "ZH": "Kinesisk (forenklet)",
+      "ZH_TW": "Kinesisk (traditionelt)"
     },
     "MISC": {
       "DEFAULT_PROJECT": "Standard prosjekt som skal brukes til oppgaver hvis ingen er spesifisert",
@@ -1109,7 +1110,7 @@
   "PS": {
     "GLOBAL_SETTINGS": "Globale innstillinger",
     "ISSUE_INTEGRATION": "Problem integrering",
-    "PRIVATE_POLICY": "Privat policy",
+    "PRIVACY_POLICY": "Privat policy",
     "PRODUCTIVITY_HELPER": "Produktivitetshjelper",
     "PROJECT_SETTINGS": "Prosjektspesifikke innstillinger",
     "SYNC_EXPORT": "Synkroniser og eksporter",

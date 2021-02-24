@@ -51,7 +51,7 @@ export class TaskComponent implements OnInit, OnDestroy, AfterViewInit {
   task!: TaskWithSubTasks;
   @Input() isBacklog: boolean = false;
   T: typeof T = T;
-  isTouchOnly: boolean = IS_TOUCH_ONLY;
+  IS_TOUCH_ONLY: boolean = IS_TOUCH_ONLY;
   isDragOver: boolean = false;
   isLockPanLeft: boolean = false;
   isLockPanRight: boolean = false;
@@ -256,9 +256,12 @@ export class TaskComponent implements OnInit, OnDestroy, AfterViewInit {
     this._taskService.pauseCurrent();
   }
 
-  updateTaskTitleIfChanged(isChanged: boolean, newTitle: string) {
+  updateTaskTitleIfChanged({
+    isChanged,
+    newVal
+  }: { isChanged: boolean; newVal: string; $taskEl: HTMLElement | null; event: Event }) {
     if (isChanged) {
-      this._taskService.update(this.task.id, {title: newTitle});
+      this._taskService.update(this.task.id, {title: newVal});
     }
     this.focusSelf();
   }
@@ -303,9 +306,12 @@ export class TaskComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.task.parentId) {
       this.focusNext(true);
     }
-    this.task.isDone
-      ? this._taskService.setUnDone(this.task.id)
-      : this._taskService.setDone(this.task.id);
+
+    if (this.task.isDone) {
+      this._taskService.setUnDone(this.task.id);
+    } else {
+      this._taskService.setDone(this.task.id);
+    }
   }
 
   showAdditionalInfos() {
@@ -319,9 +325,11 @@ export class TaskComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   toggleShowAdditionalInfoOpen() {
-    this.isSelected
-      ? this._taskService.setSelectedId(null)
-      : this._taskService.setSelectedId(this.task.id);
+    if (this.isSelected) {
+      this._taskService.setSelectedId(null);
+    } else {
+      this._taskService.setSelectedId(this.task.id);
+    }
     // this.focusSelf();
   }
 
@@ -352,6 +360,10 @@ export class TaskComponent implements OnInit, OnDestroy, AfterViewInit {
 
   removeFromMyDay() {
     this.onTagsUpdated(this.task.tagIds.filter(tagId => tagId !== TODAY_TAG.id));
+  }
+
+  convertToMainTask() {
+    this._taskService.convertToMainTask(this.task);
   }
 
   focusPrevious(isFocusReverseIfNotPossible: boolean = false) {

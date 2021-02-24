@@ -8,7 +8,7 @@ import { Directive, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output }
 })
 export class ContentEditableOnClickDirective implements OnInit, OnDestroy {
   @Input() isResetAfterEdit: boolean = false;
-  @Output() editFinished: EventEmitter<any> = new EventEmitter();
+  @Output() editFinished: EventEmitter<{ isChanged: boolean; newVal: string; $taskEl: HTMLElement | null; event: Event }> = new EventEmitter();
   private _lastDomValue: string | undefined;
   private _lastOutsideVal: string | undefined;
   private readonly _el: HTMLElement;
@@ -52,7 +52,7 @@ export class ContentEditableOnClickDirective implements OnInit, OnDestroy {
 
       // this fixes the bug where the text is not visible for some time
       // by triggering a redraw via el.offsetHeight
-      // tslint:disable-next-line
+      // eslint-disable-next-line
       this._el.offsetHeight;
     });
 

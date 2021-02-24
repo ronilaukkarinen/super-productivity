@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { IssueFieldsForTask, Task } from 'src/app/features/tasks/task.model';
-import { catchError, concatMap, first, switchMap, map } from 'rxjs/operators';
+import { catchError, concatMap, first, map, switchMap } from 'rxjs/operators';
 import { IssueServiceInterface } from '../../issue-service-interface';
 import { GitlabApiService } from './gitlab-api/gitlab-api.service';
 import { ProjectService } from '../../../project/project.service';
@@ -11,7 +11,7 @@ import { SnackService } from '../../../../core/snack/snack.service';
 import { GitlabIssue } from './gitlab-issue/gitlab-issue.model';
 import { truncate } from '../../../../util/truncate';
 import { T } from '../../../../t.const';
-import { GITLAB_URL_REGEX } from './gitlab.const';
+import { GITLAB_BASE_URL } from './gitlab.const';
 
 @Injectable({
   providedIn: 'root',
@@ -27,10 +27,11 @@ export class GitlabCommonInterfacesService implements IssueServiceInterface {
   issueLink$(issueId: number, projectId: string): Observable<string> {
     return this._getCfgOnce$(projectId).pipe(
       map((cfg) => {
-        if (cfg.project && cfg.project?.search(GITLAB_URL_REGEX) >= 0) {
-          return `${cfg.project}/issues/${issueId}`;
+        if (cfg.gitlabBaseUrl != null) {
+          const fixedUrl = cfg.gitlabBaseUrl.match(/.*\/$/) ? cfg.gitlabBaseUrl : `${cfg.gitlabBaseUrl}/`;
+          return `${fixedUrl}${cfg.project}issues/${issueId}`;
         } else {
-          return `https://gitlab.com/${cfg.project?.replace(/%2F/g, '/')}/issues/${issueId}`;
+          return `${GITLAB_BASE_URL}${cfg.project?.replace(/%2F/g, '/')}/issues/${issueId}`;
         }
       })
     );
@@ -55,7 +56,7 @@ export class GitlabCommonInterfacesService implements IssueServiceInterface {
     task: Task,
     isNotifySuccess: boolean = true,
     isNotifyNoUpdateRequired: boolean = false
-  ): Promise<{ taskChanges: Partial<Task>, issue: GitlabIssue } | null> {
+  ): Promise<{ taskChanges: Partial<Task>; issue: GitlabIssue } | null> {
     if (!task.projectId) {
       throw new Error('No projectId');
     }
@@ -112,7 +113,7 @@ export class GitlabCommonInterfacesService implements IssueServiceInterface {
     tasks: Task[],
     isNotifySuccess: boolean = true,
     isNotifyNoUpdateRequired: boolean = false
-  ): Promise<{ task: Task, taskChanges: Partial<Task>, issue: GitlabIssue }[]> {
+  ): Promise<{ task: Task; taskChanges: Partial<Task>; issue: GitlabIssue }[]> {
     // First sort the tasks by the issueId
     // because the API returns it in a desc order by issue iid(issueId)
     // so it makes the update check easier and faster
@@ -129,13 +130,13 @@ export class GitlabCommonInterfacesService implements IssueServiceInterface {
     let i = 0;
     while (i < tasks.length) {
       ids = [];
-      for (let j = 0; j < paramsCount && i < tasks.length ; j++, i++) {
+      for (let j = 0; j < paramsCount && i < tasks.length; j++, i++) {
         ids.push(tasks[i].issueId);
       }
       issues.push(...(await this._gitlabApiService.getByIds$(ids as string[], cfg).toPromise()));
     }
 
-    const updatedIssues: { task: Task, taskChanges: Partial<Task>, issue: GitlabIssue }[] = [];
+    const updatedIssues: { task: Task; taskChanges: Partial<Task>; issue: GitlabIssue }[] = [];
 
     for (i = 0; i < tasks.length; i++) {
       const issueUpdate: number = new Date(issues[i].updated_at).getTime();

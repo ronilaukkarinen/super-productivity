@@ -15,17 +15,17 @@ export interface IssueServiceInterface {
   refreshIssue?(task: Task,
     isNotifySuccess: boolean,
     isNotifyNoUpdateRequired: boolean): Promise<{
-    taskChanges: Partial<Task>,
-    issue: IssueData
+    taskChanges: Partial<Task>;
+    issue: IssueData;
   } | null>;
 
   refreshIssues?(tasks: Task[],
     isNotifySuccess: boolean,
     isNotifyNoUpdateRequired: boolean): Promise<{
-      task: Task,
-      taskChanges: Partial<Task>,
-      issue: IssueData
-    }[]>;
+    task: Task;
+    taskChanges: Partial<Task>;
+    issue: IssueData;
+  }[]>;
 
   getMappedAttachments?(issueDataIN: IssueData): TaskAttachment[];
 }

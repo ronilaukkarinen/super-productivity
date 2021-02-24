@@ -1,5 +1,11 @@
 import { Injectable } from '@angular/core';
-import { GOOGLE_DEFAULT_FIELDS_FOR_DRIVE, GOOGLE_DISCOVERY_DOCS, GOOGLE_SCOPES, GOOGLE_SETTINGS } from './google.const';
+import {
+  GOOGLE_API_SCOPES,
+  GOOGLE_DEFAULT_FIELDS_FOR_DRIVE,
+  GOOGLE_DISCOVERY_DOCS,
+  GOOGLE_SETTINGS_ELECTRON,
+  GOOGLE_SETTINGS_WEB
+} from './google.const';
 import * as moment from 'moment';
 import { HANDLED_ERROR_PROP_STR, IS_ELECTRON } from '../../../app.constants';
 import { MultiPartBuilder } from './util/multi-part-builder';
@@ -8,17 +14,19 @@ import { SnackService } from '../../../core/snack/snack.service';
 import { SnackType } from '../../../core/snack/snack.model';
 import { catchError, concatMap, filter, map, shareReplay, switchMap, take } from 'rxjs/operators';
 import { BehaviorSubject, EMPTY, from, merge, Observable, of, throwError, timer } from 'rxjs';
-import { IPC } from '../../../../../electron/ipc-events.const';
 import { BannerService } from '../../../core/banner/banner.service';
 import { BannerId } from '../../../core/banner/banner.model';
 import { T } from '../../../t.const';
-import { ElectronService } from '../../../core/electron/electron.service';
 import { isOnline } from '../../../util/is-online';
 import { IS_ANDROID_WEB_VIEW } from '../../../util/is-android-web-view';
 import { androidInterface } from '../../../core/android/android-interface';
 import { getGoogleSession, GoogleSession, updateGoogleSession } from './google-session';
-import { ipcRenderer } from 'electron';
 import { GoogleDriveFileMeta } from './google-api.model';
+import axios, { AxiosResponse } from 'axios';
+import * as querystring from 'querystring';
+import { MatDialog } from '@angular/material/dialog';
+import { DialogGetAndEnterAuthCodeComponent } from '../dialog-get-and-enter-auth-code/dialog-get-and-enter-auth-code.component';
+import { GOOGLE_AUTH_CODE_VERIFIER, GOOGLE_AUTH_URL } from './get-google-auth-url';
 
 const EXPIRES_SAFETY_MARGIN = 5 * 60 * 1000;
 
@@ -62,9 +70,10 @@ export class GoogleApiService {
 
   constructor(
     private readonly _http: HttpClient,
-    private readonly _electronService: ElectronService,
+    // private readonly _electronService: ElectronService,
     private readonly _snackService: SnackService,
     private readonly _bannerService: BannerService,
+    private readonly _matDialog: MatDialog,
   ) {
     this.isLoggedIn$.subscribe((isLoggedIn) => this.isLoggedIn = isLoggedIn);
   }
@@ -80,27 +89,9 @@ export class GoogleApiService {
       }
     };
 
+    // TODO cleanup later
     if (IS_ELECTRON) {
-      const session = this._session;
-      if (this.isLoggedIn && !this._isTokenExpired(session)) {
-        return new Promise((resolve) => resolve(true));
-      }
-
-      (this._electronService.ipcRenderer as typeof ipcRenderer).send(IPC.TRIGGER_GOOGLE_AUTH, session.refreshToken);
-      return new Promise((resolve, reject) => {
-        (this._electronService.ipcRenderer as typeof ipcRenderer).on(IPC.GOOGLE_AUTH_TOKEN, (ev, data: any) => {
-          this._updateSession({
-            accessToken: data.access_token,
-            expiresAt: data.expiry_date,
-            refreshToken: data.refresh_token,
-          });
-          showSuccessMsg();
-          resolve(data);
-        });
-        (this._electronService.ipcRenderer as typeof ipcRenderer).on(IPC.GOOGLE_AUTH_TOKEN_ERROR, (err, hmm) => {
-          reject(err);
-        });
-      });
+      return this._loginElectron();
     } else if (IS_ANDROID_WEB_VIEW) {
       return androidInterface.getGoogleToken().then((token) => {
         this._saveToken({
@@ -173,7 +164,7 @@ export class GoogleApiService {
       method: 'GET',
       url: `https://content.googleapis.com/drive/v2/files/${encodeURIComponent(fileId)}`,
       params: {
-        key: GOOGLE_SETTINGS.API_KEY,
+        key: GOOGLE_SETTINGS_WEB.API_KEY,
         supportsTeamDrives: true,
         fields: GOOGLE_DEFAULT_FIELDS_FOR_DRIVE
       },
@@ -190,7 +181,7 @@ export class GoogleApiService {
       method: 'GET',
       url: `https://content.googleapis.com/drive/v2/files`,
       params: {
-        key: GOOGLE_SETTINGS.API_KEY,
+        key: GOOGLE_SETTINGS_WEB.API_KEY,
         // should be called name officially instead of title
         q: `title='${fileName}' and trashed=false`,
       },
@@ -198,7 +189,7 @@ export class GoogleApiService {
   }
 
   // NOTE: file will always be returned as text (makes sense)
-  loadFile$(fileId: string | null): Observable<{ backup: string | undefined, meta: GoogleDriveFileMeta }> {
+  loadFile$(fileId: string | null): Observable<{ backup: string | undefined; meta: GoogleDriveFileMeta }> {
     if (!fileId) {
       this._snackIt('ERROR', T.F.GOOGLE.S_API.ERR_NO_FILE_ID);
       return throwError({[HANDLED_ERROR_PROP_STR]: 'No file id given'});
@@ -210,7 +201,7 @@ export class GoogleApiService {
         // workaround for: https://issuetracker.google.com/issues/149891169
         url: `https://www.googleapis.com/drive/v2/files/${encodeURIComponent(fileId)}`,
         params: {
-          key: GOOGLE_SETTINGS.API_KEY,
+          key: GOOGLE_SETTINGS_WEB.API_KEY,
           supportsTeamDrives: true,
           alt: 'media',
         },
@@ -227,7 +218,7 @@ export class GoogleApiService {
     );
   }
 
-  saveFile$(content: string, metadata: any = {}): Observable<{}> {
+  saveFile$(content: string, metadata: any = {}): Observable<any> {
     let path;
     let method;
 
@@ -252,7 +243,7 @@ export class GoogleApiService {
       method,
       url: `https://content.googleapis.com${path}`,
       params: {
-        key: GOOGLE_SETTINGS.API_KEY,
+        key: GOOGLE_SETTINGS_WEB.API_KEY,
         uploadType: 'multipart',
         supportsTeamDrives: true,
         fields: GOOGLE_DEFAULT_FIELDS_FOR_DRIVE
@@ -261,6 +252,91 @@ export class GoogleApiService {
         'Content-Type': multipart.type
       },
       data: multipart.body
+    });
+  }
+
+  private async _loginElectron(): Promise<any> {
+    const session = this._session;
+    if (this.isLoggedIn && !this._isTokenExpired(session)) {
+      return new Promise((resolve) => resolve(true));
+    } else if (session.refreshToken && (!this._session.accessToken || this._isTokenExpired(session))) {
+      try {
+        const {data} = await this._getAccessTokenFromRefreshToken(session.refreshToken);
+        if (data) {
+          this._updateSession({
+            accessToken: data.access_token,
+            expiresAt: data.expires_in + Date.now(),
+          });
+          return new Promise((resolve) => resolve(true));
+        }
+        return Promise.reject('No data - Token refresh failed');
+      } catch (e) {
+        console.error(e);
+        return Promise.reject('Token refresh failed');
+      }
+    } else {
+      const authCode = await this._matDialog.open(DialogGetAndEnterAuthCodeComponent, {
+        restoreFocus: true,
+        data: {
+          providerName: 'Google Drive',
+          url: GOOGLE_AUTH_URL,
+        },
+      }).afterClosed().toPromise();
+      if (authCode) {
+        try {
+          const {data} = await this._getTokenFromAuthCode(authCode);
+          if (data) {
+            this._updateSession({
+              accessToken: data.access_token,
+              expiresAt: data.expires_in + Date.now(),
+              refreshToken: data.refresh_token,
+            });
+            return new Promise((resolve) => resolve(true));
+          }
+          return Promise.reject('No data - Token creation failed');
+        } catch (e) {
+          console.error(e);
+          return Promise.reject('Token creation failed');
+        }
+      }
+      return Promise.reject('No token');
+    }
+  }
+
+  private _getTokenFromAuthCode(code: string): Promise<AxiosResponse<{
+    access_token: string;
+    expires_in: number;
+    token_type: string;
+    scope: string;
+    refresh_token: string;
+  }>> {
+    return axios.request({
+      url: 'https://oauth2.googleapis.com/token?' + querystring.stringify({
+        client_id: GOOGLE_SETTINGS_ELECTRON.CLIENT_ID,
+        client_secret: GOOGLE_SETTINGS_ELECTRON.API_KEY,
+        grant_type: 'authorization_code',
+        redirect_uri: 'urn:ietf:wg:oauth:2.0:oob',
+        code_verifier: GOOGLE_AUTH_CODE_VERIFIER,
+        code,
+      }),
+      method: 'POST',
+    });
+  }
+
+  private _getAccessTokenFromRefreshToken(refreshToken: string): Promise<AxiosResponse<{
+    access_token: string;
+    expires_in: number;
+    token_type: string;
+    scope: string;
+  }>> {
+    return axios.request({
+      url: 'https://oauth2.googleapis.com/token?' + querystring.stringify({
+        client_id: GOOGLE_SETTINGS_ELECTRON.CLIENT_ID,
+        client_secret: GOOGLE_SETTINGS_ELECTRON.API_KEY,
+        grant_type: 'refresh_token',
+        refresh_token: refreshToken,
+      }),
+      method: 'POST',
     });
   }
 
@@ -274,10 +350,10 @@ export class GoogleApiService {
 
   private initClient() {
     return this._gapi.client.init({
-      apiKey: GOOGLE_SETTINGS.API_KEY,
-      clientId: GOOGLE_SETTINGS.CLIENT_ID,
+      apiKey: GOOGLE_SETTINGS_WEB.API_KEY,
+      clientId: GOOGLE_SETTINGS_WEB.CLIENT_ID,
       discoveryDocs: GOOGLE_DISCOVERY_DOCS,
-      scope: GOOGLE_SCOPES
+      scope: GOOGLE_API_SCOPES
     });
   }
 
@@ -302,7 +378,7 @@ export class GoogleApiService {
 
     return new Promise((resolve, reject) => {
       return this._loadJs().then(() => {
-        // tslint:disable-next-line
+        // eslint-disable-next-line
         this._gapi = (window as any)['gapi'];
         this._gapi.load('client:auth2', () => {
           this.initClient()
@@ -319,16 +395,17 @@ export class GoogleApiService {
     [key: string]: any;
     accessToken?: string;
     access_token?: string;
+    expires_in?: number;
     expires_at?: string | number;
     expiresAt?: string | number;
     Zi?: {
       access_token?: string;
       expires_at?: string | number;
-    }
+    };
   }) {
     const r: any = res;
-    const accessToken = r.accessToken || r.access_token || r.Zi?.access_token;
-    const expiresAt = +(r.expiresAt || r.expires_at || r.Zi?.expires_at);
+    const accessToken = r.accessToken || r.access_token || r.Zi?.access_token || r.uc?.access_token;
+    const expiresAt = +(r.expiresAt || r.expires_at || r.Zi?.expires_at || r.uc?.expires_at || Date.now() + r.expire_in);
 
     if (!accessToken) {
       console.log(res);

@@ -29,7 +29,7 @@ import { MyHammerConfig } from '../hammer-config.class';
 import { ProcrastinationModule } from './features/procrastination/procrastination.module';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
-import { LanguageCode } from './app.constants';
+import { IS_ELECTRON, LanguageCode } from './app.constants';
 import { LanguageService } from './core/language/language.service';
 import { ConfigModule } from './features/config/config.module';
 import { ProjectModule } from './features/project/project.module';
@@ -79,7 +79,7 @@ export function createTranslateLoader(http: HttpClient) {
     BrowserAnimationsModule,
     HttpClientModule,
     HammerModule,
-    RouterModule.forRoot(APP_ROUTES, {useHash: true}),
+    RouterModule.forRoot(APP_ROUTES, {useHash: true, relativeLinkResolution: 'legacy'}),
     // NOTE: both need to be present to use forFeature stores
     StoreModule.forRoot(reducers,
       {
@@ -114,7 +114,7 @@ export function createTranslateLoader(http: HttpClient) {
         {name: 'pattern', message: 'Invalid input'},
       ],
     }),
-    ServiceWorkerModule.register('ngsw-worker.js', {enabled: environment.production || environment.stage}),
+    ServiceWorkerModule.register('ngsw-worker.js', {enabled: !(IS_ELECTRON) && (environment.production || environment.stage)}),
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,

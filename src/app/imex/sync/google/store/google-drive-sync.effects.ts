@@ -16,6 +16,27 @@ import { DEFAULT_SYNC_FILE_NAME } from '../google.const';
 import { SyncProvider } from '../../sync-provider.model';
 import { HANDLED_ERROR_PROP_STR } from '../../../../app.constants';
 
+// this._globalConfigService.cfg$.pipe(
+//   map(syncCfg => syncCfg.sync),
+//   tap(console.log),
+//   distinctUntilChanged((a: SyncConfig, b: SyncConfig) => {
+//     console.log(a.googleDriveSync.authCode, b.googleDriveSync.authCode);
+//     return a.googleDriveSync.authCode === b.googleDriveSync.authCode;
+//   }),
+// ).subscribe((syncCfg: SyncConfig) => {
+//   console.log('BEFORE', syncCfg);
+//   if (syncCfg.googleDriveSync.authCode) {
+//     console.log('I am here!');
+//     this._globalConfigService.updateSection('sync', {
+//       ...syncCfg,
+//       googleDriveSync: {
+//         ...syncCfg.googleDriveSync,
+//         authCode: null,
+//       }
+//     });  this._googleApiService.getTokenFromAuthCode(syncCfg.googleDriveSync.authCode).then(console.log);
+//   }
+// });
+
 @Injectable()
 export class GoogleDriveSyncEffects {
   @Effect() createSyncFile$: any = this._actions$.pipe(
@@ -25,10 +46,10 @@ export class GoogleDriveSyncEffects {
     filter(({payload}: UpdateGlobalConfigSection): boolean => payload.sectionKey === 'sync'),
     map(({payload}) => payload.sectionCfg as SyncConfig),
     switchMap((syncConfig: SyncConfig): Observable<{
-      syncFileName: string,
-      _backupDocId: string,
-      _syncFileNameForBackupDocId: string,
-      sync: SyncConfig
+      syncFileName: string;
+      _backupDocId: string;
+      _syncFileNameForBackupDocId: string;
+      sync: SyncConfig;
     } | never> => {
       const isChanged = (syncConfig.googleDriveSync.syncFileName !== syncConfig.googleDriveSync._syncFileNameForBackupDocId);
       if (syncConfig.syncProvider === SyncProvider.GoogleDrive
@@ -100,10 +121,10 @@ export class GoogleDriveSyncEffects {
       }), 200)
     ),
     map(({syncFileName, _backupDocId, _syncFileNameForBackupDocId, sync}: {
-      syncFileName: string,
-      _backupDocId: string,
-      _syncFileNameForBackupDocId: string,
-      sync: SyncConfig
+      syncFileName: string;
+      _backupDocId: string;
+      _syncFileNameForBackupDocId: string;
+      sync: SyncConfig;
     }) => new UpdateGlobalConfigSection({
       sectionKey: 'sync',
       sectionCfg: ({

@@ -3,7 +3,7 @@ import { combineLatest, Observable } from 'rxjs';
 import { DropboxSyncService } from './dropbox/dropbox-sync.service';
 import { SyncProvider, SyncProviderServiceInterface } from './sync-provider.model';
 import { GlobalConfigService } from '../../features/config/global-config.service';
-import { distinctUntilChanged, filter, map, shareReplay, switchMap, take } from 'rxjs/operators';
+import { distinctUntilChanged, filter, first, map, shareReplay, switchMap, take } from 'rxjs/operators';
 import { SyncConfig } from '../../features/config/global-config.model';
 import { GoogleDriveSyncService } from './google/google-drive-sync.service';
 import { AppDataComplete, DialogConflictResolutionResult } from './sync.model';
@@ -19,6 +19,7 @@ import { SnackService } from '../../core/snack/snack.service';
 import { isValidAppData } from './is-valid-app-data.util';
 import { truncate } from '../../util/truncate';
 import { PersistenceLocalService } from '../../core/persistence/persistence-local.service';
+import { getSyncErrorStr } from './get-sync-error-str';
 
 @Injectable({
   providedIn: 'root',
@@ -80,7 +81,16 @@ export class SyncProviderService {
 
   private async _sync(cp: SyncProviderServiceInterface): Promise<unknown> {
     let local: AppDataComplete | undefined;
-    await cp.isReadyForRequests$.toPromise();
+
+    const isReady = await cp.isReady$.pipe(first()).toPromise();
+    if (!isReady) {
+      this._snackService.open({
+        msg: T.F.SYNC.S.INCOMPLETE_CFG,
+        type: 'ERROR'
+      });
+      return;
+    }
+
     const localSyncMeta = await this._persistenceLocalService.load();
     const lastSync = localSyncMeta[cp.id].lastSync;
     const localRev = localSyncMeta[cp.id].rev;
@@ -92,8 +102,8 @@ export class SyncProviderService {
     if (typeof revRes === 'string') {
       if (revRes === 'NO_REMOTE_DATA' && this._c(T.F.SYNC.C.NO_REMOTE_DATA)) {
         this._log(cp, '↑ Update Remote after no getRevAndLastClientUpdate()');
-        local = await this._syncService.inMemoryComplete$.pipe(take(1)).toPromise();
-        return await this._uploadAppData(cp, local);
+        const localLocal = await this._syncService.inMemoryComplete$.pipe(take(1)).toPromise();
+        return await this._uploadAppData(cp, localLocal);
       }
       // NOTE: includes HANDLED_ERROR
       return;
@@ -101,7 +111,7 @@ export class SyncProviderService {
       this._snackService.open({
         msg: T.F.SYNC.S.UNKNOWN_ERROR,
         translateParams: {
-          err: truncate(revRes.toString(), 100),
+          err: getSyncErrorStr(revRes),
         },
         type: 'ERROR'
       });
@@ -123,12 +133,20 @@ export class SyncProviderService {
     // simple check based on local meta
     // ------------------------------------
     // if not defined yet
-    local = await this._syncService.inMemoryComplete$.pipe(take(1)).toPromise();
-    if (local.lastLocalSyncModelChange === 0) {
+    local = local || await this._syncService.inMemoryComplete$.pipe(take(1)).toPromise();
+
+    if (!local.lastLocalSyncModelChange || local.lastLocalSyncModelChange === 0) {
       if (!(this._c(T.F.SYNC.C.EMPTY_SYNC))) {
         this._log(cp, 'PRE2: Abort');
         return;
       }
+    }
+
+    // PRE CHECK 3
+    // simple check if lastLocalSyncModelChange
+    // ------------------------------------
+    if (!local.lastLocalSyncModelChange) {
+      throw new Error('No lastLocalSyncModelChange');
     }
 
     // PRE CHECK 3
@@ -226,7 +244,7 @@ export class SyncProviderService {
 
   // WRAPPER
   // -------
-  private async _downloadAppData(cp: SyncProviderServiceInterface): Promise<{ rev: string, data: AppDataComplete | undefined }> {
+  private async _downloadAppData(cp: SyncProviderServiceInterface): Promise<{ rev: string; data: AppDataComplete | undefined }> {
     const rev = await this._getLocalRev(cp);
     return cp.downloadAppData(rev);
   }
@@ -240,8 +258,8 @@ export class SyncProviderService {
     const localRev = await this._getLocalRev(cp);
     const successRev = await cp.uploadAppData(data, localRev, isForceOverwrite);
     if (typeof successRev === 'string') {
-      this._setLocalRevAndLastSync(cp, successRev, data.lastLocalSyncModelChange);
       this._log(cp, '↑ Uploaded Data ↑ ✓');
+      return await this._setLocalRevAndLastSync(cp, successRev, data.lastLocalSyncModelChange) as Promise<void>;
     } else {
       this._log(cp, 'X Upload Request Error');
       if (cp.isUploadForcePossible && this._c(T.F.SYNC.C.FORCE_UPLOAD_AFTER_ERROR)) {
@@ -250,7 +268,9 @@ export class SyncProviderService {
         this._snackService.open({
           msg: T.F.SYNC.S.UPLOAD_ERROR,
           translateParams: {
-            err: truncate(successRev.toString(), 100),
+            err: truncate(successRev?.toString
+              ? successRev.toString()
+              : successRev as any, 100),
           },
           type: 'ERROR'
         });
@@ -325,7 +345,7 @@ export class SyncProviderService {
   private _openConflictDialog$({remote, local, lastSync}: {
     remote: number;
     local: number;
-    lastSync: number
+    lastSync: number;
   }): Observable<DialogConflictResolutionResult> {
     return this._matDialog.open(DialogSyncConflictComponent, {
       restoreFocus: true,

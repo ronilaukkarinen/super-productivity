@@ -12,16 +12,22 @@ export const DEFAULT_GLOBAL_CONFIG: GlobalConfigState = {
   misc: {
     isDarkMode: IS_USE_DARK_THEME_AS_DEFAULT,
     isConfirmBeforeExit: false,
-    isNotifyWhenTimeEstimateExceeded: false,
+    isNotifyWhenTimeEstimateExceeded: true,
     isAutMarkParentAsDone: false,
     isAutoStartNextTask: true,
     isTurnOffMarkdown: false,
-    isAutoAddWorkedOnToToday: false,
+    isAutoAddWorkedOnToToday: true,
     isMinimizeToTray: false,
     isTrayShowCurrentTask: true,
     isDisableInitialDialog: IS_F_DROID_APP,
     defaultProjectId: null,
-    firstDayOfWeek: 0,
+    firstDayOfWeek: 1,
+    taskNotesTpl: `**How can I best achieve it now?**
+
+**What do I want?**
+
+**Why do I want it?**
+`,
   },
   evaluation: {
     isHideEvaluationSheet: false,
@@ -33,10 +39,10 @@ export const DEFAULT_GLOBAL_CONFIG: GlobalConfigState = {
     isUnTrackedIdleResetsBreakTimer: true,
   },
   takeABreak: {
-    isTakeABreakEnabled: false,
+    isTakeABreakEnabled: true,
     isLockScreen: false,
     isFocusWindow: false,
-    /* tslint:disable-next-line */
+    /* eslint-disable-next-line */
     takeABreakMessage: 'Take a break! You have been working for ${duration} without one. Go away from the computer! Take a short walk! Makes you more productive in the long run!',
     takeABreakMinWorkingTime: 60 * minute,
     motivationalImg: null,
@@ -63,7 +69,7 @@ export const DEFAULT_GLOBAL_CONFIG: GlobalConfigState = {
     addNewTask: 'Shift+A',
     addNewNote: 'n',
     openProjectNotes: 'Shift+N',
-    openDistractionPanel: 'Shift+D',
+    toggleSideNav: 'Shift+D',
     showHelp: '?',
     toggleBookmarks: 'Shift+V',
     toggleBacklog: 'b',
@@ -81,7 +87,7 @@ export const DEFAULT_GLOBAL_CONFIG: GlobalConfigState = {
     taskSchedule: 's',
     taskToggleDone: 'd',
     taskAddSubTask: 'a',
-    taskDelete: 'Delete',
+    taskDelete: 'Backspace',
     taskMoveToProject: 'e',
     taskOpenContextMenu: 'q',
     selectPreviousTask: 'k',
@@ -124,6 +130,7 @@ export const DEFAULT_GLOBAL_CONFIG: GlobalConfigState = {
     googleDriveSync: {
       isCompressData: true,
       syncFileName: 'SUPER_PRODUCTIVITY_SYNC.json',
+      authCode: null,
       _syncFileNameForBackupDocId: null,
       _backupDocId: null,
     },

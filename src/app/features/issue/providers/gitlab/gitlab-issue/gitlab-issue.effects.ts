@@ -15,7 +15,7 @@ import { T } from 'src/app/t.const';
 import { TaskWithSubTasks } from '../../../../tasks/task.model';
 import { WorkContextService } from '../../../../work-context/work-context.service';
 
-const isGitlabEnabled = (gitlabCfg: GitlabCfg): boolean => !!gitlabCfg && !!gitlabCfg.project && gitlabCfg.project.length > 2;
+const isGitlabEnabled = (gitlabCfg: GitlabCfg): boolean => !!gitlabCfg && !!gitlabCfg.project;
 
 @Injectable()
 export class GitlabIssueEffects {
@@ -33,10 +33,10 @@ export class GitlabIssueEffects {
       );
     }),
     map((cos: any) => cos
-      .filter(({cfg, task}: { cfg: GitlabCfg, task: TaskWithSubTasks }) =>
+      .filter(({cfg, task}: { cfg: GitlabCfg; task: TaskWithSubTasks }) =>
         isGitlabEnabled(cfg) && cfg.isAutoPoll
       )
-      .map(({task}: { cfg: GitlabCfg, task: TaskWithSubTasks }) => task)
+      .map(({task}: { cfg: GitlabCfg; task: TaskWithSubTasks }) => task)
     ),
     tap((gitlabTasks: TaskWithSubTasks[]) => {
       if (gitlabTasks && gitlabTasks.length > 0) {

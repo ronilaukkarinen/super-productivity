@@ -41,6 +41,7 @@ import { fadeAnimation } from '../../../ui/animations/fade.ani';
 })
 export class AddTaskBarComponent implements AfterViewInit, OnDestroy {
   @Input() isAddToBacklog: boolean = false;
+  @Input() tabindex: number = 0;
   @Input() isAddToBottom: boolean = false;
   @Input() isDoubleEnterMode: boolean = false;
   @Input() isElevated: boolean = false;
@@ -253,7 +254,9 @@ export class AddTaskBarComponent implements AfterViewInit, OnDestroy {
       if (!item.issueType || !item.issueData) {
         throw new Error('No issueData');
       }
-      const res = await this._taskService.checkForTaskWithIssueInProject(item.issueData.id, item.issueType, this._workContextService.activeWorkContextId as string);
+      const res = await this._taskService.checkForTaskWithIssueInProject(item.issueData.id,
+        item.issueType,
+        this._workContextService.activeWorkContextId as string);
       if (!res) {
         this._lastAddedTaskId = await this._issueService.addTaskWithIssue(
           item.issueType,

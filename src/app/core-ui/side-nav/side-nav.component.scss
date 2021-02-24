@@ -105,6 +105,9 @@ section {
       background: #fff;
       border-radius: $card-border-radius;
 
+      // avoid affecting drag handle
+      pointer-events: none;
+
       @include darkTheme() {
         border-color: $dark-theme-extra-border-color;
         background: $dark-theme-bg-lighter;
@@ -129,6 +132,7 @@ section {
     }
   }
 
+  &:focus,
   &:hover {
     button:last-of-type {
       opacity: 1;
@@ -160,6 +164,7 @@ section {
   }
 
   &.isActiveContext,
+  &:focus,
   &:hover {
     .tag-color,
     .project-color {
@@ -174,6 +179,7 @@ section {
 .project-settings-btn,
 .project button:first-of-type,
 .route-link {
+  &:focus,
   &:hover {
     font-weight: bold;
 
@@ -219,6 +225,16 @@ section {
   align-items: center;
   font-weight: bold;
 
+  &:focus,
+  &:hover {
+    @include darkTheme {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    @include lightTheme {
+      background: rgba(var(--palette-background-hover), var(--palette-background-hover-alpha, 1));
+    }
+  }
+
   ::ng-deep mat-icon:last-of-type {
     margin-left: auto;
     margin-right: 0;
@@ -242,13 +258,9 @@ section {
 }
 
 
-.drag-handle {
-  cursor: grab;
+.drag-handle { /* Firefox 1.5-26 */
   position: relative;
-
-  &:active {
-    cursor: grabbing;
-  }
+  @include grabCursor();
 
   &:after {
     content: '';

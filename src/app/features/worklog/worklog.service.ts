@@ -107,7 +107,10 @@ export class WorklogService {
   }
 
   // TODO this is not waiting for worklog data
-  getTaskListForRange$(rangeStart: Date, rangeEnd: Date, isFilterOutTimeSpentOnOtherDays: boolean = false, projectId?: string | null): Observable<WorklogTask[]> {
+  getTaskListForRange$(rangeStart: Date,
+    rangeEnd: Date,
+    isFilterOutTimeSpentOnOtherDays: boolean = false,
+    projectId?: string | null): Observable<WorklogTask[]> {
     const isProjectIdProvided: boolean = !!projectId || projectId === null;
 
     return this.worklogTasks$.pipe(
@@ -147,7 +150,10 @@ export class WorklogService {
     const taskState = await this._taskService.taskFeatureState$.pipe(first()).toPromise() || createEmptyEntity();
 
     // console.time('calcTime');
-    const {completeStateForWorkContext, unarchivedIds} = getCompleteStateForWorkContext(workContext, taskState, archive);
+    const {
+      completeStateForWorkContext,
+      unarchivedIds
+    } = getCompleteStateForWorkContext(workContext, taskState, archive);
     // console.timeEnd('calcTime');
 
     const startEnd = {

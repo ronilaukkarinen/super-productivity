@@ -19,7 +19,6 @@ import {
   timeout
 } from 'rxjs/operators';
 import { GlobalConfigService } from '../../features/config/global-config.service';
-import { SyncProvider } from './sync-provider.model';
 import { DataInitService } from '../../core/data-init/data-init.service';
 import { isOnline$ } from '../../util/is-online';
 import { PersistenceService } from '../../core/persistence/persistence.service';
@@ -50,7 +49,7 @@ export class SyncService {
     catchError(() => throwError('Error while trying to get inMemoryComplete$')),
   );
 
-  private _onUpdateLocalDataTrigger$: Observable<{ appDataKey: AllowedDBKeys, data: any, isDataImport: boolean, projectId?: string }> =
+  private _onUpdateLocalDataTrigger$: Observable<{ appDataKey: AllowedDBKeys; data: any; isDataImport: boolean; projectId?: string }> =
     this._persistenceService.onAfterSave$.pipe(
       filter(({appDataKey, data, isDataImport, isSyncModelChange}) => !!data && !isDataImport && isSyncModelChange),
     );
@@ -124,7 +123,6 @@ export class SyncService {
         ? this._isInitialSyncDoneManual$.asObservable()
         : of(true);
     }),
-    startWith(true),
   );
   private _afterInitialSyncDoneAndDataLoadedInitially$: Observable<boolean> = this._isInitialSyncDone$.pipe(
     filter(isDone => isDone),
@@ -170,8 +168,7 @@ export class SyncService {
     );
   }
 
-  // tslint:disable-next-line
-  setInitialSyncDone(val: boolean, syncProvider: SyncProvider) {
+  setInitialSyncDone(val: boolean) {
     this._isInitialSyncDoneManual$.next(val);
   }
 }

@@ -1,4 +1,4 @@
-// tslint:disable:max-line-length
+/* eslint-disable max-len */
 import { ConfigFormSection, MiscConfig } from '../global-config.model';
 import { T } from '../../../t.const';
 
@@ -98,6 +98,13 @@ export const MISC_SETTINGS_FORM_CFG: ConfigFormSection<MiscConfig> = {
           {label: T.F.TASK_REPEAT.F.FRIDAY, value: 5},
           {label: T.F.TASK_REPEAT.F.SATURDAY, value: 6},
         ],
+      },
+    },
+    {
+      key: 'taskNotesTpl',
+      type: 'textarea',
+      templateOptions: {
+        label: T.GCF.MISC.TASK_NOTES_TPL,
       },
     },
   ]

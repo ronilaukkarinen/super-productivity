@@ -44,8 +44,8 @@
        align="center"
        height="50">
 </a>
-<a href='//www.microsoft.com/store/apps/9nhfvg8361tw?cid=storebadge&ocid=badge' target="_blank">
-  <img src='https://assets.windowsphone.com/85864462-9c82-451e-9355-a3d5f874397a/English_get-it-from-MS_InvariantCulture_Default.png'
+<a href='//www.microsoft.com/store/apps/9NHFVG8361TW?cid=storebadge&ocid=badge' target="_blank">
+  <img src='https://developer.microsoft.com/store/badges/images/English_get-it-from-MS.png'
        align="center"
        alt='English badge'
        height="50" />
@@ -98,7 +98,7 @@ If you want the Jira integration and idle time tracking to work, you have to als
 ### Windows
 Due to certification issues it's recommended to download the app from the Microsoft Store:
 
-<a href='//www.microsoft.com/store/apps/9nhfvg8361tw?cid=storebadge&ocid=badge'><img src='https://assets.windowsphone.com/13484911-a6ab-4170-8b7e-795c1e8b4165/English_get_L_InvariantCulture_Default.png' alt='English badge' width="127" height="52"/></a>
+<a href='//www.microsoft.com/store/apps/9nhfvg8361tw?cid=storebadge&ocid=badge'><img src='https://developer.microsoft.com/store/badges/images/English_get-it-from-MS.png' alt='English badge' width="127" height="52"/></a>
 
 ### Linux
 ```
@@ -122,7 +122,7 @@ makepkg -si
 ### MacOS
 Install via [homebrew cask](https://github.com/caskroom/homebrew-cask):
 ```
-brew cask install superproductivity
+brew install --cask superproductivity
 ```
 <a href='//apps.apple.com/de/app/super-productivity/id1482572463?l=en&mt=12' target="_blank">
   <img src='./screens/app-store-badge.svg'
@@ -154,6 +154,7 @@ There are several ways to help.
 
 4. **Contribute**: You don't have to be programmer to help. Some of the icons really need improvement and many of the translations could use some love. 
 
+5. **[Sponsor the project](https://github.com/sponsors/johannesjo)**
 
 ### Pull Requests 
 **Pull requests** are of course very welcome! Please make sure that you're following the [angular commit guidelines](https://github.com/angular/angular.js/blob/master/DEVELOPERS.md#commits) and to also include the issue number in your commit message, if you're fixing a particular issue (e.g.: `feat: add nice feature with the number #31`).

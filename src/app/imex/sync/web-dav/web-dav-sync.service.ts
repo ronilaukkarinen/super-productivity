@@ -3,7 +3,7 @@ import { SyncProvider, SyncProviderServiceInterface } from '../sync-provider.mod
 import { AppDataComplete, SyncGetRevResult } from '../sync.model';
 
 import { Observable } from 'rxjs';
-import { concatMap, distinctUntilChanged, first, map, tap } from 'rxjs/operators';
+import { concatMap, distinctUntilChanged, first, map } from 'rxjs/operators';
 import { WebDavApiService } from './web-dav-api.service';
 import { DataInitService } from '../../../core/data-init/data-init.service';
 import { environment } from '../../../../environments/environment';
@@ -19,11 +19,6 @@ export class WebDavSyncService implements SyncProviderServiceInterface {
   isReady$: Observable<boolean> = this._dataInitService.isAllDataLoadedInitially$.pipe(
     concatMap(() => this._webDavApiService.isAllConfigDataAvailable$),
     distinctUntilChanged(),
-  );
-
-  isReadyForRequests$: Observable<boolean> = this.isReady$.pipe(
-    tap((isReady) => !isReady && new Error('WebDAV Sync not ready')),
-    first(),
   );
 
   private _cfg$: Observable<WebDavConfig> = this._globalConfigService.cfg$.pipe(
@@ -63,7 +58,7 @@ export class WebDavSyncService implements SyncProviderServiceInterface {
     }
   }
 
-  async downloadAppData(localRev: string): Promise<{ rev: string, data: AppDataComplete }> {
+  async downloadAppData(localRev: string): Promise<{ rev: string; data: AppDataComplete }> {
     this._globalProgressBarService.countUp(T.GPB.WEB_DAV_DOWNLOAD);
     const cfg = await this._cfg$.pipe(first()).toPromise();
     try {

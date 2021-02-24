@@ -62,7 +62,7 @@ import { checkFixEntityStateConsistency } from '../../util/check-fix-entity-stat
 import { SimpleCounter, SimpleCounterState } from '../../features/simple-counter/simple-counter.model';
 import { simpleCounterReducer } from '../../features/simple-counter/store/simple-counter.reducer';
 import { from, merge, Observable, Subject } from 'rxjs';
-import { concatMap, shareReplay, skipWhile } from 'rxjs/operators';
+import { concatMap, debounceTime, shareReplay, skipWhile } from 'rxjs/operators';
 import { devError } from '../../util/dev-error';
 import { isValidAppData } from '../../imex/sync/is-valid-app-data.util';
 import { removeFromDb, saveToDb } from './persistence.actions';
@@ -140,13 +140,16 @@ export class PersistenceService {
     'obstruction',
   );
 
-  onAfterSave$: Subject<{ appDataKey: AllowedDBKeys, data: unknown, isDataImport: boolean, isSyncModelChange: boolean, projectId?: string }> = new Subject();
+  onAfterSave$: Subject<{ appDataKey: AllowedDBKeys; data: unknown; isDataImport: boolean; isSyncModelChange: boolean; projectId?: string }>
+    = new Subject();
   onAfterImport$: Subject<AppDataComplete> = new Subject();
 
   inMemoryComplete$: Observable<AppDataComplete> = merge(
     from(this.loadComplete()),
     this.onAfterImport$,
     this.onAfterSave$.pipe(
+      // wait for all updates if fired in short succession (which happens for relational data)
+      debounceTime(50),
       concatMap(() => this.loadComplete()),
       // TODO maybe not necessary
       skipWhile(complete => !isValidAppData(complete)),
@@ -163,6 +166,9 @@ export class PersistenceService {
     private _compressionService: CompressionService,
     private _store: Store<any>,
   ) {
+    // NOTE: we actually need to subscribe to this, otherwise onAfterSave$ won't always be taken
+    // into consideration for inMemoryComplete$ and we won't always have the latest data
+    this.inMemoryComplete$.subscribe();
     // this.inMemoryComplete$.subscribe((v) => console.log('inMemoryComplete$', v));
   }
 
@@ -400,7 +406,10 @@ export class PersistenceService {
       //   }
       //   return data;
       // },
-      saveState: (data: any, {isDataImport = false, isSyncModelChange}: { isDataImport?: boolean, isSyncModelChange: boolean }) => {
+      saveState: (data: any, {
+        isDataImport = false,
+        isSyncModelChange
+      }: { isDataImport?: boolean; isSyncModelChange: boolean }) => {
         if (data && data.ids && data.entities) {
           data = checkFixEntityStateConsistency(data, appDataKey);
         }
@@ -453,7 +462,10 @@ export class PersistenceService {
         projectId,
         legacyDBKey: this._makeProjectKey(projectId, lsKey)
       }).then(v => migrateFn(v, projectId)),
-      save: (projectId: string, data: any, {isDataImport = false, isSyncModelChange}: { isDataImport?: boolean, isSyncModelChange?: boolean }) => this._saveToDb({
+      save: (projectId: string, data: any, {
+        isDataImport = false,
+        isSyncModelChange
+      }: { isDataImport?: boolean; isSyncModelChange?: boolean }) => this._saveToDb({
         dbKey: appDataKey,
         data,
         isDataImport,
@@ -483,7 +495,7 @@ export class PersistenceService {
     return Object.assign({}, ...forProjectsData);
   }
 
-  // tslint:disable-next-line
+  // eslint-disable-next-line
   private async _loadForProjectIds(pids: string[], getDataFn: Function): Promise<any> {
     return await pids.reduce(async (acc, projectId) => {
       const prevAcc = await acc;
@@ -495,7 +507,7 @@ export class PersistenceService {
     }, Promise.resolve({}));
   }
 
-  // tslint:disable-next-line
+  // eslint-disable-next-line
   private async _saveForProjectIds(data: any, projectModel: PersistenceForProjectModel<unknown, unknown>, isDataImport = false) {
     const promises: Promise<any>[] = [];
     Object.keys(data).forEach(projectId => {
@@ -521,9 +533,9 @@ export class PersistenceService {
   private async _saveToDb({dbKey, data, isDataImport = false, projectId, isSyncModelChange = false}: {
     dbKey: AllowedDBKeys;
     data: any;
-    projectId?: string,
-    isDataImport?: boolean,
-    isSyncModelChange?: boolean,
+    projectId?: string;
+    isDataImport?: boolean;
+    isSyncModelChange?: boolean;
   }): Promise<any> {
     if (!this._isBlockSaving || isDataImport === true) {
       const idbKey = this._getIDBKey(dbKey, projectId);
@@ -550,8 +562,8 @@ export class PersistenceService {
 
   private async _removeFromDb({dbKey, isDataImport = false, projectId}: {
     dbKey: AllowedDBKeys;
-    projectId?: string,
-    isDataImport?: boolean,
+    projectId?: string;
+    isDataImport?: boolean;
   }): Promise<any> {
     const idbKey = this._getIDBKey(dbKey, projectId);
     if (!this._isBlockSaving || isDataImport === true) {
@@ -564,9 +576,9 @@ export class PersistenceService {
   }
 
   private async _loadFromDb({legacyDBKey, dbKey, projectId}: {
-    legacyDBKey: string,
-    dbKey: AllowedDBKeys,
-    projectId?: string,
+    legacyDBKey: string;
+    dbKey: AllowedDBKeys;
+    projectId?: string;
   }): Promise<any> {
     const idbKey = this._getIDBKey(dbKey, projectId);
     // NOTE: too much clutter
@@ -576,9 +588,9 @@ export class PersistenceService {
   }
 
   private _updateInMemory({appDataKey, projectId, data}: {
-    appDataKey: AllowedDBKeys,
-    projectId?: string,
-    data: any
+    appDataKey: AllowedDBKeys;
+    projectId?: string;
+    data: any;
   }) {
     if (!this._inMemoryComplete) {
       throw new Error('No in memory copy yet');
@@ -593,10 +605,10 @@ export class PersistenceService {
   }
 
   private _extendAppDataComplete({complete, appDataKey, projectId, data}: {
-    complete: AppDataComplete | AppDataCompleteOptionalSyncModelChange,
-    appDataKey: AllowedDBKeys,
-    projectId?: string,
-    data: any
+    complete: AppDataComplete | AppDataCompleteOptionalSyncModelChange;
+    appDataKey: AllowedDBKeys;
+    projectId?: string;
+    data: any;
   }): AppDataComplete | AppDataCompleteOptionalSyncModelChange {
     // console.log(appDataKey, data && data.ids && data.ids.length);
     return {

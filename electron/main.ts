@@ -10,7 +10,6 @@ import { createWindow } from './main-window';
 
 import { sendJiraRequest, setupRequestHeadersForImages } from './jira';
 import { getGitLog } from './git-log';
-import { initGoogleAuth } from './google-auth';
 import { errorHandler } from './error-handler';
 import { initDebug } from './debug';
 import { IPC } from './ipc-events.const';
@@ -30,6 +29,7 @@ const IS_DEV = process.env.NODE_ENV === 'DEV';
 let isShowDevTools: boolean = IS_DEV;
 let customUrl: string;
 let isDisableTray = false;
+let forceDarkTray = false;
 
 if (IS_DEV) {
   console.log('Starting in DEV Mode!!!');
@@ -40,6 +40,11 @@ process.argv.forEach((val) => {
   if (val && val.includes('--disable-tray')) {
     isDisableTray = true;
     console.log('Disable tray icon');
+  }
+
+  if (val && val.includes('--force-dark-tray')) {
+    forceDarkTray = true;
+    console.log('Force dark mode for tray icon');
   }
 
   if (val && val.includes('--user-data-dir=')) {
@@ -234,7 +239,7 @@ ipcMain.on(IPC.REGISTER_GLOBAL_SHORTCUTS_EVENT, (ev, cfg) => {
   registerShowAppShortCuts(cfg);
 });
 
-ipcMain.on(IPC.JIRA_SETUP_IMG_HEADERS, (ev, {jiraCfg, wonkyCookie}: { jiraCfg: JiraCfg, wonkyCookie?: string }) => {
+ipcMain.on(IPC.JIRA_SETUP_IMG_HEADERS, (ev, {jiraCfg, wonkyCookie}: { jiraCfg: JiraCfg; wonkyCookie?: string }) => {
   setupRequestHeadersForImages(jiraCfg, wonkyCookie);
 });
 
@@ -258,6 +263,7 @@ function createIndicator() {
     showApp,
     quitApp,
     ICONS_FOLDER,
+    forceDarkTray
   });
 }
 
@@ -270,7 +276,6 @@ function createMainWin() {
     quitApp,
     customUrl,
   });
-  initGoogleAuth();
 }
 
 function registerShowAppShortCuts(cfg: KeyboardConfig) {
